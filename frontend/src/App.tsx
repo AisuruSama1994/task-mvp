@@ -5,7 +5,7 @@ import Contactos from './pages/Contactos';
 
 // Placeholders for now
 import Grupos from './pages/Grupos';
-const Tareas = () => <div className="text-xl font-bold text-gray-800 dark:text-white">Tareas Page (En construcción)</div>;
+import Tareas from './pages/Tareas';
 const Comunicados = () => <div className="text-xl font-bold text-gray-800 dark:text-white">Comunicados Page (En construcción)</div>;
 
 function App() {
