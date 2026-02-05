@@ -5,7 +5,7 @@ from app.config import settings
 from app.tasks.scheduler import start_scheduler, stop_scheduler
 
 # Importar routers
-from app.routes import contactos, grupos, tareas, comunicados
+from app.routes import contactos, grupos, tareas, comunicados, modelos_comunicados
 
 app = FastAPI(
     title="Sistema de Recordatorios",
@@ -76,6 +76,7 @@ app.include_router(contactos.router, prefix="/api/contactos", tags=["Contactos"]
 app.include_router(grupos.router, prefix="/api/grupos", tags=["Grupos"])
 app.include_router(tareas.router, prefix="/api/tareas", tags=["Tareas"])
 app.include_router(comunicados.router, prefix="/api/comunicados", tags=["Comunicados"])
+app.include_router(modelos_comunicados.router, prefix="/api/modelos-comunicados", tags=["Modelos Comunicados"])
 
 
 

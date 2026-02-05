@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Users, CheckSquare, MessageSquare, History, Settings, UsersRound } from 'lucide-react';
+import { LayoutDashboard, Users, CheckSquare, MessageSquare, History, Settings, UsersRound, Copy } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const Layout = () => {
@@ -10,6 +10,7 @@ const Layout = () => {
         { to: '/grupos', icon: UsersRound, label: 'Grupos' },
         { to: '/tareas', icon: CheckSquare, label: 'Tareas' },
         { to: '/comunicados', icon: MessageSquare, label: 'Comunicados' },
+        { to: '/modelos-comunicados', icon: Copy, label: 'Modelos Comunicados' },
     ];
 
     return (

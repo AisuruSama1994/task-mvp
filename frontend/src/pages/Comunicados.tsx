@@ -1,0 +1,397 @@
+import React, { useEffect, useState } from 'react';
+import { Plus, Search, Eye, Send, Trash2, X } from 'lucide-react';
+import api from '../services/api';
+import type { Comunicado, Contacto, Grupo } from '../types';
+import Modal from '../components/Modal';
+
+interface ComunicadoForm {
+  titulo: string;
+  contenido: string;
+  tipo: string;
+  fecha_programada: string;
+  hora_programada: string;
+  destinatarios_contactos: string[];
+  destinatarios_grupos: string[];
+  estado: string;
+}
+
+const Comunicados = () => {
+  const [comunicados, setComunicados] = useState<Comunicado[]>([]);
+  const [contactos, setContactos] = useState<Contacto[]>([]);
+  const [grupos, setGrupos] = useState<Grupo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+
+  const [showModal, setShowModal] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [verifyDelete, setVerifyDelete] = useState<string | null>(null);
+  const [searchContacto, setSearchContacto] = useState('');
+  const [searchGrupo, setSearchGrupo] = useState('');
+
+  const [formData, setFormData] = useState<ComunicadoForm>({
+    titulo: '',
+    contenido: '',
+    tipo: 'email',
+    fecha_programada: new Date().toISOString().split('T')[0],
+    hora_programada: '09:00',
+    destinatarios_contactos: [],
+    destinatarios_grupos: [],
+    estado: 'borrador'
+  });
+
+  const filteredContactos = contactos.filter(c =>
+    c.nombre.toLowerCase().includes(searchContacto.toLowerCase())
+  );
+
+  const filteredGrupos = grupos.filter(g =>
+    g.nombre.toLowerCase().includes(searchGrupo.toLowerCase())
+  );
+
+  const fetchComunicados = async () => {
+    try {
+      const response = await api.get('/comunicados');
+      setComunicados(response.data);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const fetchContactos = async () => {
+    try {
+      const response = await api.get('/contactos');
+      setContactos(response.data);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const fetchGrupos = async () => {
+    try {
+      const response = await api.get('/grupos');
+      setGrupos(response.data);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  useEffect(() => {
+    const load = async () => {
+      await Promise.all([fetchComunicados(), fetchContactos(), fetchGrupos()]);
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  const handlePreview = async (id: string) => {
+    try {
+      await api.post(`/comunicados/${id}/vista-previa`);
+      setShowPreview(true);
+    } catch (error) {
+      alert('Error en vista previa');
+    }
+  };
+
+  const handleSend = async (id: string) => {
+    try {
+      await api.post(`/comunicados/${id}/enviar`);
+      fetchComunicados();
+      alert('Comunicado programado');
+    } catch (error) {
+      alert('Error al enviar');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await api.delete(`/comunicados/${id}`);
+      setVerifyDelete(null);
+      fetchComunicados();
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.post('/comunicados', formData);
+      setShowModal(false);
+      setFormData({
+        titulo: '',
+        contenido: '',
+        tipo: 'email',
+        fecha_programada: new Date().toISOString().split('T')[0],
+        hora_programada: '09:00',
+        destinatarios_contactos: [],
+        destinatarios_grupos: [],
+        estado: 'borrador'
+      });
+      setSearchContacto('');
+      setSearchGrupo('');
+      fetchComunicados();
+    } catch (error) {
+      alert('Error al guardar');
+    }
+  };
+
+  const toggleContacto = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      destinatarios_contactos: prev.destinatarios_contactos.includes(id)
+        ? prev.destinatarios_contactos.filter(x => x !== id)
+        : [...prev.destinatarios_contactos, id]
+    }));
+  };
+
+  const toggleGrupo = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      destinatarios_grupos: prev.destinatarios_grupos.includes(id)
+        ? prev.destinatarios_grupos.filter(x => x !== id)
+        : [...prev.destinatarios_grupos, id]
+    }));
+  };
+
+  const removeContacto = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      destinatarios_contactos: prev.destinatarios_contactos.filter(x => x !== id)
+    }));
+  };
+
+  const removeGrupo = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      destinatarios_grupos: prev.destinatarios_grupos.filter(x => x !== id)
+    }));
+  };
+
+  const filtered = comunicados.filter(c =>
+    c.titulo.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const selectedContactosNames = contactos
+    .filter(c => formData.destinatarios_contactos.includes(c.id))
+    .map(c => c.nombre);
+
+  const selectedGruposNames = grupos
+    .filter(g => formData.destinatarios_grupos.includes(g.id))
+    .map(g => g.nombre);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Comunicados</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Envía recordatorios por Email o WhatsApp</p>
+        </div>
+        <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nuevo Comunicado
+        </button>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <input
+          type="text"
+          placeholder="Buscar comunicados..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+        />
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50 dark:bg-gray-700/50">
+            <tr>
+              <th className="p-4 text-left text-sm font-medium">Título</th>
+              <th className="p-4 text-left text-sm font-medium">Tipo</th>
+              <th className="p-4 text-left text-sm font-medium">Programado</th>
+              <th className="p-4 text-left text-sm font-medium">Estado</th>
+              <th className="p-4 text-right text-sm font-medium">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {loading ? (
+              <tr><td colSpan={5} className="p-8 text-center text-gray-500">Cargando...</td></tr>
+            ) : filtered.length === 0 ? (
+              <tr><td colSpan={5} className="p-8 text-center text-gray-500">No hay comunicados</td></tr>
+            ) : (
+              filtered.map((c) => (
+                <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                  <td className="p-4">
+                    <div className="font-medium">{c.titulo}</div>
+                    <p className="text-sm text-gray-600 truncate">{c.contenido.substring(0, 50)}...</p>
+                  </td>
+                  <td className="p-4 text-sm">{c.tipo}</td>
+                  <td className="p-4 text-sm">{c.fecha_programada || '-'}</td>
+                  <td className="p-4 text-sm">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${c.estado === 'enviado' ? 'bg-green-100 text-green-800' :
+                        c.estado === 'programado' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                      }`}>
+                      {c.estado}
+                    </span>
+                  </td>
+                  <td className="p-4 text-right flex justify-end gap-2">
+                    <button onClick={() => handlePreview(c.id)} className="text-blue-600">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    {c.estado === 'borrador' && (
+                      <button onClick={() => handleSend(c.id)} className="text-green-600">
+                        <Send className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button onClick={() => setVerifyDelete(c.id)} className="text-red-600">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Nuevo Comunicado">
+        <form onSubmit={handleSubmit} className="space-y-4 max-h-96 overflow-y-auto">
+          <input required value={formData.titulo} onChange={(e) => setFormData({ ...formData, titulo: e.target.value })} placeholder="Título" className="w-full p-2 border rounded bg-white dark:bg-gray-700" />
+          <select value={formData.tipo} onChange={(e) => setFormData({ ...formData, tipo: e.target.value })} className="w-full p-2 border rounded bg-white dark:bg-gray-700">
+            <option value="email">📧 Email</option>
+            <option value="whatsapp">💬 WhatsApp</option>
+            <option value="ambos">📧💬 Ambos</option>
+          </select>
+          <textarea required value={formData.contenido} onChange={(e) => setFormData({ ...formData, contenido: e.target.value })} placeholder="Contenido (usa {{nombre}}, {{email}}, {{whatsapp}})" className="w-full p-2 border rounded bg-white dark:bg-gray-700" rows={4} />
+          <div className="grid grid-cols-2 gap-4">
+            <input type="date" value={formData.fecha_programada} onChange={(e) => setFormData({ ...formData, fecha_programada: e.target.value })} className="w-full p-2 border rounded bg-white dark:bg-gray-700" />
+            <input type="time" value={formData.hora_programada} onChange={(e) => setFormData({ ...formData, hora_programada: e.target.value })} className="w-full p-2 border rounded bg-white dark:bg-gray-700" />
+          </div>
+
+          {/* Contactos con Buscador */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Contactos Individuales</label>
+            <div className="relative mb-2">
+              <Search className="absolute left-2 top-2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar contacto..."
+                value={searchContacto}
+                onChange={(e) => setSearchContacto(e.target.value)}
+                className="w-full pl-8 p-2 border rounded bg-white dark:bg-gray-700 text-sm"
+              />
+            </div>
+            {/* Tags de seleccionados */}
+            {selectedContactosNames.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {selectedContactosNames.map(nombre => (
+                  <span key={nombre} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs">
+                    {nombre}
+                    <button
+                      type="button"
+                      onClick={() => removeContacto(contactos.find(c => c.nombre === nombre)!.id)}
+                      className="hover:text-blue-600"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            {/* Lista de búsqueda */}
+            <div className="border rounded p-2 max-h-40 overflow-y-auto space-y-1">
+              {filteredContactos.length === 0 ? (
+                <p className="text-xs text-gray-500">No hay contactos</p>
+              ) : (
+                filteredContactos.map(c => (
+                  <label key={c.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 p-1 rounded">
+                    <input
+                      type="checkbox"
+                      checked={formData.destinatarios_contactos.includes(c.id)}
+                      onChange={() => toggleContacto(c.id)}
+                      className="rounded"
+                    />
+                    <span>{c.nombre}</span>
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Grupos con Buscador */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Grupos</label>
+            <div className="relative mb-2">
+              <Search className="absolute left-2 top-2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar grupo..."
+                value={searchGrupo}
+                onChange={(e) => setSearchGrupo(e.target.value)}
+                className="w-full pl-8 p-2 border rounded bg-white dark:bg-gray-700 text-sm"
+              />
+            </div>
+            {/* Tags de seleccionados */}
+            {selectedGruposNames.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {selectedGruposNames.map(nombre => (
+                  <span key={nombre} className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs">
+                    {nombre}
+                    <button
+                      type="button"
+                      onClick={() => removeGrupo(grupos.find(g => g.nombre === nombre)!.id)}
+                      className="hover:text-green-600"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            {/* Lista de búsqueda */}
+            <div className="border rounded p-2 max-h-40 overflow-y-auto space-y-1">
+              {filteredGrupos.length === 0 ? (
+                <p className="text-xs text-gray-500">No hay grupos</p>
+              ) : (
+                filteredGrupos.map(g => (
+                  <label key={g.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 p-1 rounded">
+                    <input
+                      type="checkbox"
+                      checked={formData.destinatarios_grupos.includes(g.id)}
+                      onChange={() => toggleGrupo(g.id)}
+                      className="rounded"
+                    />
+                    <span>{g.nombre}</span>
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <button type="submit" className="flex-1 bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Crear</button>
+            <button type="button" onClick={() => setShowModal(false)} className="flex-1 bg-gray-300 dark:bg-gray-600 p-2 rounded">Cancelar</button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal isOpen={showPreview} onClose={() => setShowPreview(false)} title="Vista Previa">
+        <p className="text-gray-600">Vista previa disponible</p>
+      </Modal>
+
+      {verifyDelete && <Modal isOpen onClose={() => setVerifyDelete(null)} title="Confirmar">
+        <p className="mb-4">¿Eliminar comunicado?</p>
+        <div className="flex gap-2">
+          <button onClick={() => handleDelete(verifyDelete)} className="flex-1 bg-red-600 text-white p-2 rounded">Eliminar</button>
+          <button onClick={() => setVerifyDelete(null)} className="flex-1 bg-gray-300 dark:bg-gray-600 p-2 rounded">Cancelar</button>
+        </div>
+      </Modal>}
+    </div>
+  );
+};
+
+export default Comunicados;

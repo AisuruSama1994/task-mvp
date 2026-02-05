@@ -6,7 +6,8 @@ import Contactos from './pages/Contactos';
 // Placeholders for now
 import Grupos from './pages/Grupos';
 import Tareas from './pages/Tareas';
-const Comunicados = () => <div className="text-xl font-bold text-gray-800 dark:text-white">Comunicados Page (En construcción)</div>;
+import Comunicados from './pages/Comunicados';
+import ModelosComunicados from './pages/ModelosComunicados';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="grupos" element={<Grupos />} />
           <Route path="tareas" element={<Tareas />} />
           <Route path="comunicados" element={<Comunicados />} />
+          <Route path="modelos-comunicados" element={<ModelosComunicados />} />
         </Route>
       </Routes>
     </BrowserRouter>
