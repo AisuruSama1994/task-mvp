@@ -42,3 +42,17 @@ export interface Comunicado {
     hora_programada?: string;
     creado_en: string;
 }
+export interface ModeloComunicado {
+    id: string;
+    nombre: string;
+    descripcion?: string;
+    tipo: "email" | "whatsapp" | "ambos";
+    contenido: string;
+}
+export interface ModeloComunicado {
+    id: string;
+    nombre: string;
+    descripcion?: string;
+    tipo: "email" | "whatsapp" | "ambos";
+    contenido: string;
+}

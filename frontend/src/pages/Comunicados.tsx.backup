@@ -107,16 +107,19 @@ const Comunicados = () => {
     load();
   }, []);
 
-  const handleLoadModelo = (modeloId: string) => {
-    const modelo = modelos.find(m => m.id === modeloId);
-    if (modelo) {
-      setFormData(prev => ({
-        ...prev,
-        titulo: modelo.nombre,
-        contenido: modelo.contenido,
-        tipo: modelo.tipo
-      }));
-      setSelectedModelo(modeloId);
+  const handleSend = async (id: string) => {
+    try {
+      const comunicado = comunicados.find(c => c.id === id);
+      if (!comunicado) return;
+
+      await api.post(`/comunicados/${id}/programar`, {
+        fecha_programada: comunicado.fecha_programada,
+        hora_programada: comunicado.hora_programada
+      });
+      fetchComunicados();
+      alert('Comunicado programado exitosamente. Se enviará automáticamente en la fecha/hora indicada.');
+    } catch (error) {
+      alert('Error al programar comunicado');
     }
   };
 
@@ -132,17 +135,11 @@ const Comunicados = () => {
 
   const handleSend = async (id: string) => {
     try {
-      const comunicado = comunicados.find(c => c.id === id);
-      if (!comunicado) return;
-
-      await api.post(`/comunicados/${id}/programar`, {
-        fecha_programada: comunicado.fecha_programada,
-        hora_programada: comunicado.hora_programada
-      });
+      await api.post(`/comunicados/${id}/enviar-ahora`);
       fetchComunicados();
-      alert('Comunicado programado exitosamente. Se enviará automáticamente en la fecha/hora indicada.');
+      alert('Comunicado programado');
     } catch (error) {
-      alert('Error al programar comunicado');
+      alert('Error al enviar');
     }
   };
 
