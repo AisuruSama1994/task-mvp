@@ -22,7 +22,7 @@ class ModeloUpdate(BaseModel):
     contenido: Optional[str] = None
 
 class ModeloResponse(BaseModel):
-    id: str
+    id: UUID
     nombre: str
     descripcion: Optional[str]
     tipo: str
