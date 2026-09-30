@@ -1,11 +1,13 @@
 # Backend
 backend/.env
-backend/__pycache__/
 backend/.venv/
 backend/venv/
 backend/uploads/
 backend/.pytest_cache/
-backend/*.pyc
+**/__pycache__/
+*.pyc
+*.bak
+*.backup
 
 # Frontend
 frontend/node_modules/
@@ -17,3 +19,5 @@ frontend/.vscode/
 # General
 .DS_Store
 *.log
+/.env
+*.dump

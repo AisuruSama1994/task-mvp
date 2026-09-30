@@ -1,7 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import List
 
-
 class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/recordatorios_db"
@@ -16,11 +15,11 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "./uploads"
     
     # WhatsApp
-    WHATSAPP_PROVIDER: str = "simulated"  # simulated | twilio
+    WHATSAPP_PROVIDER: str = "pywhatkit"  # simulated | twilio | pywhatkit
     WHATSAPP_ENABLED: bool = True
     
     # Email
-    EMAIL_PROVIDER: str = "simulated"  # simulated | gmail | sendgrid
+    EMAIL_PROVIDER: str = "gmail"  # simulated | gmail | sendgrid
     EMAIL_ENABLED: bool = True
     
     # Gmail (para cuando conectes tu email)
@@ -36,9 +35,13 @@ class Settings(BaseSettings):
     SENDGRID_API_KEY: str = ""
     SENDGRID_FROM_EMAIL: str = ""
     
+    # PyWhatkit
+    PYWHATKIT_WAIT_TIME: int = 15
+    PYWHATKIT_TAB_CLOSE: bool = True
+    
     # Scheduler
     SCHEDULER_ENABLED: bool = True
-    SCHEDULER_CHECK_INTERVAL: int = 60  # segundos
+    SCHEDULER_CHECK_INTERVAL: int = 60
     
     @property
     def cors_origins_list(self) -> List[str]:
@@ -47,6 +50,5 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
-
 
 settings = Settings()
